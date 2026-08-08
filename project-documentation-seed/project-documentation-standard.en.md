@@ -1,8 +1,8 @@
 # Project documentation standard
 
-> Status: seed  
-> Audience: maintainers, engineers, and coding agents  
-> Scope: stack-agnostic repository documentation  
+> Status: seed
+> Audience: maintainers, engineers, and coding agents
+> Scope: stack-agnostic repository documentation
 > Canonical language: choose one per repository; English is recommended for
 > engineering sources of truth
 
@@ -31,7 +31,8 @@ Create documentation in this order:
 4. `docs/architecture/overview.md` — current system boundaries and dependency
    direction.
 5. `docs/standards/` — only conventions the project actually enforces.
-6. `docs/runbooks/local-development.md` — repeatable local operation.
+6. `docs/runbooks/local-development.md` — when setup, device testing, services,
+   configuration, recovery, or deployment no longer fit a short README.
 7. Add ADRs, Tasks, contracts, and other documents only when real work needs
    them.
 
@@ -48,7 +49,8 @@ The README is for a new human contributor. Keep it short and executable:
 - prerequisites;
 - installation and local startup;
 - required configuration without real secrets;
-- test, lint, build, and shutdown commands;
+- test, lint, and build commands;
+- shutdown commands only when local services require an explicit shutdown flow;
 - links to `AGENTS.md` and `docs/INDEX.md`;
 - the most common setup failure or a link to its runbook.
 
@@ -61,7 +63,7 @@ operational handbook.
 architecture or coding standards. It should contain:
 
 - required reading and instruction priority;
-- project purpose, current priorities, and explicit non-goals;
+- project purpose, durable boundaries, and explicit non-goals;
 - small, repository-wide working rules;
 - links to canonical architecture, style, testing, documentation, and runbook
   sources;
@@ -72,6 +74,9 @@ architecture or coding standards. It should contain:
 Place additional `AGENTS.md` files only in packages or modules that need more
 specific rules. A nested file extends or overrides the root policy for its
 subtree. Do not repeat unchanged root rules.
+
+Keep changing priorities in Roadmap or active Tasks. Do not turn `AGENTS.md`
+into a live backlog.
 
 Copyable skeleton:
 
@@ -92,10 +97,6 @@ from prompts, archived Tasks, or superseded documents.
 ## Project scope
 
 Purpose: <one concrete paragraph>.
-
-Current priorities:
-
-1. <priority>;
 
 Out of scope unless explicitly requested:
 
@@ -182,8 +183,14 @@ mechanically.
 | `standards/` | Which repository-wide conventions are enforced? | Generic advice with no project effect |
 
 Use Tasks as the repository implementation unit. If the team works in calendar
-sprints, keep scheduling in the project-management system and link to Tasks;
-do not maintain duplicate `tasks/` and `sprints/` specifications.
+sprints, keep scheduling in exactly one place: either the repository Roadmap or
+an external project-management system. Link scheduling items to Tasks and do not
+maintain duplicate `tasks/` and `sprints/` specifications.
+
+Do not create a Task document for every small edit. Use one when work spans
+multiple phases or changes architecture, contracts, persistence, operations, or
+a substantial user workflow. A focused fix may be documented by code, tests,
+and its commit or pull request.
 
 ## 6. D.O.C.S. relevance checklist
 
@@ -208,17 +215,38 @@ task-specific details in a Task.
 
 ## 7. Document metadata
 
-Every active source-of-truth document should begin with:
+Every maintained document of a type listed below should begin with metadata
+appropriate to its type. `README.md`, `AGENTS.md`, `docs/INDEX.md`, and templates
+are exempt. Archived and superseded documents retain their metadata but are not
+current sources of truth.
+
+Common metadata:
 
 ```markdown
 # <Title>
 
-> Status: draft | active | superseded | archived  
+> Status: <type-specific status>  
 > Owner: <team, module, or role>  
 > Last reviewed: YYYY-MM-DD  
-> Source of truth: yes/no — for <exact scope>  
+> Canonical for: <exact scope>  
 > Related: [Document](relative/path.md), [ADR](../adr/0001-example.md)
 ```
+
+Use type-specific statuses:
+
+| Document | Statuses |
+|---|---|
+| Architecture | `draft`, `active`, `superseded`, `archived` |
+| ADR | `proposed`, `accepted`, `rejected`, `superseded` |
+| Task | `planned`, `active`, `blocked`, `completed`, `cancelled`, `archived` |
+| Roadmap | `draft`, `active`, `superseded` |
+| Runbook | `draft`, `active`, `deprecated` |
+| Contract | `draft`, `active`, `deprecated`, `superseded` |
+| Standard | `draft`, `active`, `superseded` |
+
+Omit `Related` when there is no useful relationship. A non-canonical working
+document should identify its owning Task or archive location instead of claiming
+source-of-truth status.
 
 Use lowercase kebab-case filenames. Use numeric prefixes for ordered ADRs and
 Tasks. Avoid `notes.md`, `final-v2.md`, `new-plan.md`, and dates that do not form
@@ -299,6 +327,9 @@ why; do not narrate obvious code.
 Prefer generated OpenAPI, schema, or CLI references when code can reliably
 produce them. Keep hand-written docs focused on semantics, examples, decisions,
 and operational context the generator cannot explain.
+
+Mark generated files clearly, document their generation command, and do not edit
+them manually.
 
 ## 13. Review checklist
 
