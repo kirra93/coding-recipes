@@ -1,8 +1,20 @@
+---
+type: standard
+status: seed
+owner: repository maintainers
+last_reviewed: 2026-08-08
+canonical_for: "repository documentation structure, metadata, and lifecycle"
+canonical: true
+translations: [project-documentation-standard.ru.md]
+---
+
 # Project documentation standard
 
-> Status: seed
 > Audience: maintainers, engineers, and coding agents
 > Scope: stack-agnostic repository documentation
+> Install as: `docs/standards/documentation.md`
+> Canonical version: this file (English). Translation:
+> [Русская версия](project-documentation-standard.ru.md)
 > Canonical language: choose one per repository; English is recommended for
 > engineering sources of truth
 
@@ -78,6 +90,11 @@ subtree. Do not repeat unchanged root rules.
 Keep changing priorities in Roadmap or active Tasks. Do not turn `AGENTS.md`
 into a live backlog.
 
+`AGENTS.md` is read on every agent turn, so it has a size budget: keep it under
+roughly 150 lines (about 2,000 tokens), and keep `docs/INDEX.md` under roughly
+100 lines. If it does not fit, rules from canonical documents have been copied
+into it. Move them back and leave a link.
+
 Copyable skeleton:
 
 ````markdown
@@ -108,6 +125,8 @@ Out of scope unless explicitly requested:
 - Prefer the smallest coherent change.
 - Preserve unrelated worktree changes.
 - Keep code, tests, contracts, and documentation consistent.
+- Change `status` and `last_reviewed` only on documents you actually verified;
+  report the rest as needing review.
 - Do not add dependencies, commit, push, or perform destructive operations
   without the authority required by this project.
 
@@ -145,6 +164,18 @@ Report changed behavior, decisions, checks run, checks not run, documentation
 updates, remaining risks, and follow-up work.
 ````
 
+### Tool-specific instruction files
+
+`AGENTS.md` is the only source of agent rules. Files that individual tools read
+must not carry rules of their own:
+
+- `CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`,
+  `.cursor/rules/*.mdc`, `.clinerules`, `CONVENTIONS.md`;
+- make each one a symlink to `AGENTS.md`, or a single line: `See AGENTS.md`.
+
+Never maintain parallel rule sets per tool. They diverge silently, and each
+agent then follows a different version of the project.
+
 ## 4. Recommended documentation tree
 
 ```text
@@ -168,6 +199,18 @@ docs/
 Use domain subdirectories when a section becomes large, for example
 `architecture/catalog/` or `runbooks/payments/`. Do not mirror the source tree
 mechanically.
+
+`docs/INDEX.md` and a section `README.md` have different jobs and must not
+overlap:
+
+- `INDEX.md` is the only navigation surface: it lists the entry points a reader
+  or agent needs and links to them.
+- A section `README.md` describes only the conventions of its own section —
+  naming and numbering, allowed statuses, when to create a document there, how
+  it is archived. It does not list the section's documents.
+
+Two places listing the same documents is the same defect as two places stating
+the same rule: one of them will be wrong.
 
 ## 5. What belongs where
 
@@ -215,22 +258,38 @@ task-specific details in a Task.
 
 ## 7. Document metadata
 
-Every maintained document of a type listed below should begin with metadata
-appropriate to its type. `README.md`, `AGENTS.md`, `docs/INDEX.md`, and templates
-are exempt. Archived and superseded documents retain their metadata but are not
+Every maintained document of a type listed below must begin with YAML
+frontmatter. `README.md`, `AGENTS.md`, `docs/INDEX.md`, and templates are
+exempt. Archived and superseded documents retain their metadata but are not
 current sources of truth.
 
-Common metadata:
+Frontmatter is the machine-readable source of truth about a document: it can be
+linted, filtered, and queried by tooling and agents. Do not restate its values
+in prose.
 
-```markdown
-# <Title>
-
-> Status: <type-specific status>  
-> Owner: <team, module, or role>  
-> Last reviewed: YYYY-MM-DD  
-> Canonical for: <exact scope>  
-> Related: [Document](relative/path.md), [ADR](../adr/0001-example.md)
+```yaml
+---
+type: adr                  # architecture|adr|task|roadmap|runbook|contract|standard
+status: accepted
+owner: payments-team       # team, module, or role
+last_reviewed: 2026-08-08
+canonical_for: "access token issuance and validation"
+supersedes: [adr/0007-jwt-in-cookie.md]
+superseded_by: null
+related: [../architecture/overview.md]
+---
 ```
+
+Field rules:
+
+- `type` and `status` are always required, and `status` must be valid for
+  `type`.
+- `canonical_for` states the exact scope this document owns. A non-canonical
+  working document omits it and names its owning Task or archive location
+  instead of claiming source-of-truth status.
+- `superseded_by` is required when `status` is `superseded` or `deprecated`.
+- Omit `related`, `supersedes`, and `superseded_by` when they add nothing.
+- Paths must resolve from the document's own location.
 
 Use type-specific statuses:
 
@@ -242,18 +301,25 @@ Use type-specific statuses:
 | Roadmap | `draft`, `active`, `superseded` |
 | Runbook | `draft`, `active`, `deprecated` |
 | Contract | `draft`, `active`, `deprecated`, `superseded` |
-| Standard | `draft`, `active`, `superseded` |
+| Standard | `seed`, `draft`, `active`, `superseded` |
 
-Omit `Related` when there is no useful relationship. A non-canonical working
-document should identify its owning Task or archive location instead of claiming
-source-of-truth status.
+`seed` marks a portable recipe that no project has adopted yet.
 
 Use lowercase kebab-case filenames. Use numeric prefixes for ordered ADRs and
 Tasks. Avoid `notes.md`, `final-v2.md`, `new-plan.md`, and dates that do not form
 part of the subject.
 
-`Last reviewed` means the content was checked against current reality, not that
+`last_reviewed` means the content was checked against current reality, not that
 punctuation changed.
+
+Changing `status` or `last_reviewed` asserts that someone confirmed the document
+against reality, so an agent may do it on its own only when it actually
+performed that confirmation and the confirmation was simple: it ran the runbook
+commands, it finished the Task it is closing, it corrected a command it had just
+executed. When correctness cannot be established inside the task — architecture,
+contracts, ADRs, standards, or anything depending on decisions made outside the
+change — the agent proposes the change and leaves it to a human. Never move a
+date merely because the file was edited.
 
 ## 8. Templates
 
@@ -300,7 +366,7 @@ When behavior changes:
 2. update code, tests, contracts, and docs in the same coherent change;
 3. add an ADR only for a durable choice with meaningful alternatives;
 4. verify commands and examples where practical;
-5. update `Last reviewed` only on documents actually checked;
+5. update `last_reviewed` only on documents actually checked;
 6. update `docs/INDEX.md` when discovery changes;
 7. report documentation changes and remaining gaps in the handoff.
 
@@ -312,8 +378,10 @@ contracts, architecture, persistence, operations, or support procedures change.
 Choose one canonical engineering language per repository. If translations are
 necessary:
 
-- label the canonical file explicitly;
-- link translations to it;
+- label the canonical file explicitly with `canonical: true` and list its
+  `translations`;
+- mark every translation with `translation_of: <canonical path>` and link back
+  to it;
 - keep filenames paired, such as `overview.en.md` and `overview.ru.md`;
 - update both in one change or mark a translation stale;
 - never let two languages become independent sources of truth.
@@ -331,7 +399,49 @@ and operational context the generator cannot explain.
 Mark generated files clearly, document their generation command, and do not edit
 them manually.
 
-## 13. Review checklist
+## 13. Sensitive data in documentation
+
+Documentation is copied into prompts, pull requests, tickets, and external
+services. Treat every documentation file as something that will eventually be
+read outside the team.
+
+- Document configuration by name and shape, never by value: `STRIPE_SECRET_KEY`
+  and its format belong in docs; the key itself never does.
+- Use obviously synthetic examples. No production identifiers, customer records,
+  real addresses, tokens, or personal data — including inside sample logs, stack
+  traces, and screenshots.
+- Redact pasted production output and mark it as redacted, or replace it with a
+  minimal synthetic equivalent.
+- Use placeholder hosts and endpoints unless the project explicitly allows real
+  ones in a private repository.
+- A secret committed to documentation is not fixed by editing the file: rotate
+  it first, then remove it.
+
+## 14. Automation and gates
+
+A standard that nothing enforces degrades. Automate what can be checked
+mechanically:
+
+- markdownlint on changed markdown;
+- a link checker for internal and external links;
+- a frontmatter validator: required keys per `type`, allowed `status` values,
+  `superseded_by` present when required, referenced paths resolve;
+- a staleness warning for `status: active` documents whose `last_reviewed` is
+  older than the project's review interval;
+- a pull request checklist item naming the canonical documents a change affects.
+
+Cold-start check:
+
+> An agent starting with empty context, given only `README.md`, `AGENTS.md`, and
+> `docs/`, must be able to install the project, run it, run its checks, and name
+> the current sources of truth for architecture, style, and testing. A failure
+> is a documentation defect, not an agent defect: fix the document that should
+> have answered the question.
+
+Keep tooling proportional to the project. A small repository can run only the
+link checker and the cold-start check and still get most of the value.
+
+## 15. Review checklist
 
 - Is there exactly one current source of truth for each rule?
 - Does the architecture describe current, not desired, behavior?
@@ -342,11 +452,17 @@ them manually.
 - Are archived and superseded documents excluded from normal guidance?
 - Do links work, and does `docs/INDEX.md` expose the important entry points?
 - Are comments and docs explaining information that code cannot express alone?
+- Does any document expose a secret value, production identifier, or personal
+  data?
+- Would the cold-start check still pass after this change?
 - Can any document or section be removed without losing useful knowledge?
 
-## 14. Common failure modes
+## 16. Common failure modes
 
 - `AGENTS.md` repeats the entire architecture and becomes stale.
+- each tool keeps its own instruction file, and the rule sets quietly diverge.
+- `last_reviewed` is bumped because a file was edited, not because it was
+  checked, and the field stops meaning anything.
 - README, Task, and Architecture each state a different rule.
 - planned architecture is presented as already implemented.
 - Tasks and sprints duplicate the same implementation specification.
