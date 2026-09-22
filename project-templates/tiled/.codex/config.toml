@@ -1,5 +1,0 @@
-# Project-local: <repo>/.codex/config.toml
-[mcp_servers.tiled-mcp]
-command = "npx"
-args = [ "-y", "tiled-mcp-server" ]
-startup_timeout_sec = 30
