@@ -55,6 +55,8 @@ Keep tool output targeted and reusable.
 - Reuse results already gathered in the current task instead of repeating equivalent reads or searches.
 - Do not repeatedly run broad repository scans or the same verification command unless new evidence requires it.
 - For verbose test/build/log output, capture the full output to a file when useful and inspect only the relevant failure or summary sections.
+- Avoid re-reading the same large file or document unless its contents may have changed or a specific section is needed.
+- During long investigation or benchmark work, keep a concise working map of established findings, relevant files, and current hypotheses so later steps can reuse it without repeating discovery.
 
 ## Engineering defaults
 
@@ -81,6 +83,7 @@ Keep tool output targeted and reusable.
 - Do not claim a check passed unless it actually ran and passed.
 - When a check cannot be run, state what was not verified and provide the exact project-specific command when known.
 - Treat failing existing checks separately from regressions introduced by the current change.
+- After a full verification gate passes, do not rerun the full gate until subsequent changes can affect it; use targeted checks for intermediate edits.
 
 ## Documentation and comments
 
